@@ -58,34 +58,39 @@ def get_inventory():
 @app.route("/add", methods=["POST"])
 def add_item():
 
-    # Read JSON request body
     item = request.get_json()
 
-    # Validate request body
     if not isinstance(item, dict):
-
         return jsonify({
             "success": False,
             "message": "Please provide a valid JSON object."
         }), 400
 
-    # Load existing inventory data
     with open(DB_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Add new item
+    # Check for duplicate ProductID
+    product_id = item.get("ProductID")
+
+    for existing_item in data:
+        if existing_item.get("ProductID") == product_id:
+            return jsonify({
+                "success": False,
+                "message": "Product already exists."
+            }), 409
+
+    # Add item if ProductID is unique
     data.append(item)
 
-    # Save updated inventory data
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-    # Return success response
     return jsonify({
         "success": True,
         "message": "Item added!",
         "item": item
     }), 201
+   
 
 
 # Sample inventory data stored in memory
